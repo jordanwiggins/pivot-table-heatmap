@@ -1,63 +1,62 @@
-// Load the required libraries
 const dscc = require('@google/dscc');
-const local = require('./localMessage.js'); // For local development
 const d3 = require('d3');
 
-const isLocal = false; // Set to true for local testing
+// Check if the environment is local
+const isLocal = false;
 
-// Draw function to render the visualization
+// Function to render the visualization
 const drawViz = (data) => {
   const container = document.getElementById('vizContainer');
-  container.innerHTML = ''; // Clear the container
+  container.innerHTML = ''; // Clear existing visualization
 
   const table = d3.select(container)
     .append('table')
-    .attr('style', 'border-collapse: collapse; width: 100%;');
+    .attr('style', 'border-collapse: collapse; width: 100%; font-family: Arial, sans-serif;');
 
-  // Add headers
+  // Add table headers
   const headers = table.append('thead').append('tr');
   data.fields.dimensions.forEach(dimension => {
-    headers.append('th').text(dimension.name).attr('style', 'border: 1px solid #ddd; padding: 8px;');
+    headers.append('th').text(dimension.name).attr('style', 'border: 1px solid #ddd; padding: 8px; background-color: #f4f4f4;');
   });
   data.fields.metrics.forEach(metric => {
-    headers.append('th').text(metric.name).attr('style', 'border: 1px solid #ddd; padding: 8px;');
+    headers.append('th').text(metric.name).attr('style', 'border: 1px solid #ddd; padding: 8px; background-color: #f4f4f4;');
   });
 
-  // Add rows with data
+  // Add table rows
   const rows = table.append('tbody')
     .selectAll('tr')
-    .data(data.rows)
+    .data(data.tables.DEFAULT)
     .enter()
     .append('tr');
 
   rows.each(function(rowData) {
     const row = d3.select(this);
 
-    // Add dimensions
+    // Add dimension values
     rowData.dimensionValues.forEach(dimensionValue => {
       row.append('td').text(dimensionValue).attr('style', 'border: 1px solid #ddd; padding: 8px;');
     });
 
-    // Add metrics with conditional formatting
-    rowData.metricValues.forEach((metricValue, i) => {
-      const value = metricValue;
-      const maxValue = d3.max(data.rows, d => d.metricValues[i]);
-      const minValue = d3.min(data.rows, d => d.metricValues[i]);
+    // Add metric values with column-specific heatmap formatting
+    rowData.metricValues.forEach((metricValue, index) => {
+      const metricColumn = data.tables.DEFAULT.map(row => row.metricValues[index]);
+      const maxValue = Math.max(...metricColumn);
+      const minValue = Math.min(...metricColumn);
 
       const colorScale = d3.scaleLinear()
         .domain([minValue, maxValue])
-        .range(['#FFFFFF', '#FF0000']); // White to red gradient
+        .range(['#FFFFFF', '#FF0000']); // Gradient from white to red
 
       row.append('td')
-        .text(value)
-        .attr('style', `border: 1px solid #ddd; padding: 8px; background-color: ${colorScale(value)};`);
+        .text(metricValue)
+        .attr('style', `border: 1px solid #ddd; padding: 8px; background-color: ${colorScale(metricValue)};`);
     });
   });
 };
 
-// Subscribe to the data updates from Looker Studio
+// Subscribe to Looker Studio updates
 if (isLocal) {
-  drawViz(local.message);
+  drawViz(local.message); // For local testing
 } else {
   dscc.subscribeToData(drawViz, {transform: dscc.objectTransform});
 }
