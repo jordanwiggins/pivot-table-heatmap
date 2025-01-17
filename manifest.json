@@ -1,8 +1,10 @@
 {
-  "id": "pivot-table-heatmap",
+  "id": "pivot-table-heatmap-12345678",
   "title": "Pivot Table Heatmap",
   "description": "A pivot table heatmap with conditional formatting applied column-wise.",
   "icon": "https://example.com/icon.png",
+  "component": {
   "script": ["https://d3js.org/d3.v6.min.js"],
+  },
   "useLegacy": false
 }
